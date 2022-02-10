@@ -6,12 +6,13 @@ from paho.mqtt import client as mqtt_client
 import random
 import _thread
 from os import getenv
+
 app = FastAPI()
 
 # ------------------------------------------------------- MQTT STUFF ----------------------------------------------------
 
-broker = 'localhost' if getenv("MQTT_HOST") is None else getenv("MQTT_HOST") 
-port = 1883 if getenv("MQTTPORT") is None else int(getenv("MQTT_PORT")) 
+broker = getenv("MQTT_HOST")
+port = 1883 if getenv("MQTT_PORT") is None else int(getenv("MQTT_PORT"))
 client_id = f'python-mqtt-{random.randint(0, 1000)}'
 client_id_subscribe = f'python-mqtt-{random.randint(0, 1000)}'
 client = None
@@ -51,8 +52,8 @@ def connect_mqtt(to_subscribe):
     else:
         global client
         client = mqtt_client.Client(client_id)
-        if getenv("MQTT_USER") is not None and getenv("MQTT_PASSWORD") is not None:
-            client.username_pw_set(getenv("MQTT_USER"), getenv("MQTT_PASSWORD"))
+        if getenv("MQTT_PASSWORD") is and 
+        # client.username_pw_set(username, password)
         client.on_connect = on_connect
         client.connect(broker, port)
         return client
@@ -155,8 +156,8 @@ def put_fan_alert(data: Temperature):
 
 @app.put("/heat/threshold")
 def put_heat_threshold(data: TemperatureAndHumidity):
-    publish("/heat/threshold/temperature", data.temperature)
-    publish("/heat/threshold/humidity", data.humidity)
+    publish("/heat/threshold/temperature", data.temperature, retrain=True)
+    publish("/heat/threshold/humidity", data.humidity, retrain=True)
     global data_heat_on_temperature
     data_heat_on_temperature = data.temperature
     global data_heat_on_humidity
@@ -214,9 +215,9 @@ class RBGValues(BaseModel):
 
 @app.put("/lights")
 def put_lights(data: RBGValues):
-    publish("/lights/r", data.r)
-    publish("/lights/g", data.g)
-    publish("/lights/b", data.b)
+    publish("/lights/r", data.r, retrain=True)
+    publish("/lights/g", data.g, retrain=True)
+    publish("/lights/b", data.b, retrain=True)
     global data_lights_r
     global data_lights_g
     global data_lights_b
