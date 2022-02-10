@@ -5,13 +5,13 @@ from pydantic import BaseModel
 from paho.mqtt import client as mqtt_client
 import random
 import _thread
-
+from os import getenv
 app = FastAPI()
 
 # ------------------------------------------------------- MQTT STUFF ----------------------------------------------------
 
-broker = 'localhost'
-port = 1883
+broker = 'localhost' if getenv("MQTT_HOST") is None else getenv("MQTT_HOST") 
+port = 1883 if getenv("MQTTPORT") is None else int(getenv("MQTT_PORT")) 
 client_id = f'python-mqtt-{random.randint(0, 1000)}'
 client_id_subscribe = f'python-mqtt-{random.randint(0, 1000)}'
 client = None
@@ -51,7 +51,8 @@ def connect_mqtt(to_subscribe):
     else:
         global client
         client = mqtt_client.Client(client_id)
-        # client.username_pw_set(username, password)
+        if getenv("MQTT_USER") is not None and getenv("MQTT_PASSWORD") is not None:
+            client.username_pw_set(getenv("MQTT_USER"), getenv("MQTT_PASSWORD"))
         client.on_connect = on_connect
         client.connect(broker, port)
         return client
