@@ -52,8 +52,8 @@ def connect_mqtt(to_subscribe):
     else:
         global client
         client = mqtt_client.Client(client_id)
-        if getenv("MQTT_PASSWORD") is and 
-        # client.username_pw_set(username, password)
+        if getenv("MQTT_USER") is not None and getenv("MQTT_PASSWORD") is not None:
+            client.username_pw_set(getenv("MQTT_USER"), getenv("MQTT_PASSWORD"))
         client.on_connect = on_connect
         client.connect(broker, port)
         return client
