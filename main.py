@@ -40,7 +40,6 @@ def connect_mqtt(to_subscribe):
             client_id_subscribe = f'python-mqtt-{random.randint(0, 1000)}'
         global clientSubscribe
         clientSubscribe = mqtt_client.Client(client_id_subscribe)
-        clientSubscribe.on_connect = on_connect
         clientSubscribe.connect(broker, port)
         return clientSubscribe
     else:
