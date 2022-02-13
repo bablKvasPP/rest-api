@@ -33,12 +33,6 @@ data_lights_g: int = 0
 data_lights_b: int = 0
 
 def connect_mqtt(to_subscribe):
-    def on_connect(client, userdata, flags, rc):
-        if rc == 0:
-            print("Connected to MQTT Broker!")
-        else:
-            print("Failed to connect, return code %d\n", rc)
-
     # Set Connecting Client ID
     if to_subscribe:
         global client_id_subscribe
@@ -73,37 +67,37 @@ def subscribe():
         the_msg = msg.payload.decode()
         the_topic = msg.topic
         print(f"Received '{the_msg}' from '{the_topic}' topic")
-        if the_topic == "/fan/threshold/temperature":
+        if the_topic == "fan/threshold/temperature":
             global data_fan_on_temperature
             data_fan_on_temperature = the_msg
-        if the_topic == "/fan/threshold/humidity":
+        if the_topic == "fan/threshold/humidity":
             global data_fan_on_humidity
             data_fan_on_humidity = the_msg
-        if the_topic == "/heat/threshold/temperature":
+        if the_topic == "heat/threshold/temperature":
             global data_heat_on_temperature
             data_heat_on_temperature = the_msg
-        if the_topic == "/heat/threshold/humidity":
+        if the_topic == "heat/threshold/humidity":
             global data_heat_on_humidity
             data_heat_on_humidity = the_msg
-        if the_topic == "/illumination":
+        if the_topic == "illumination":
             global data_illumination
             data_illumination = the_msg
-        if the_topic == "/lights/r":
+        if the_topic == "lights/r":
             global data_lights_r
             data_lights_r = the_msg
-        if the_topic == "/lights/g":
+        if the_topic == "lights/g":
             global data_lights_g
             data_lights_g = the_msg
-        if the_topic == "/lights/b":
+        if the_topic == "lights/b":
             global data_lights_b
             data_lights_b = the_msg
-        if the_topic == "/temperature":
+        if the_topic == "temperature":
             global data_global_temperature
             data_global_temperature = the_msg
-        if the_topic == "/humidity":
+        if the_topic == "humidity":
             global data_global_humidity
             data_global_humidity = the_msg
-        if the_topic == "/fan/alert":
+        if the_topic == "fan/alert":
             global data_fan_alert_temperature
             data_fan_alert_temperature = the_msg
 
@@ -136,8 +130,8 @@ class TemperatureAndHumidity(BaseModel):
 
 @app.put("/fan/threshold")
 def put_fan_threshold(data: TemperatureAndHumidity):
-    publish("/fan/threshold/temperature", data.temperature)
-    publish("/fan/threshold/humidity", data.humidity)
+    publish("fan/threshold/temperature", data.temperature, retrain=True)
+    publish("fan/threshold/humidity", data.humidity, retrain=True)
     global data_fan_on_temperature
     data_fan_on_temperature = data.temperature
     global data_fan_on_humidity
@@ -156,8 +150,8 @@ def put_fan_alert(data: Temperature):
 
 @app.put("/heat/threshold")
 def put_heat_threshold(data: TemperatureAndHumidity):
-    publish("/heat/threshold/temperature", data.temperature, retrain=True)
-    publish("/heat/threshold/humidity", data.humidity, retrain=True)
+    publish("heat/threshold/temperature", data.temperature, retrain=True)
+    publish("heat/threshold/humidity", data.humidity, retrain=True)
     global data_heat_on_temperature
     data_heat_on_temperature = data.temperature
     global data_heat_on_humidity
@@ -215,9 +209,9 @@ class RBGValues(BaseModel):
 
 @app.put("/lights")
 def put_lights(data: RBGValues):
-    publish("/lights/r", data.r, retrain=True)
-    publish("/lights/g", data.g, retrain=True)
-    publish("/lights/b", data.b, retrain=True)
+    publish("lights/r", data.r, retrain=True)
+    publish("lights/g", data.g, retrain=True)
+    publish("lights/b", data.b, retrain=True)
     global data_lights_r
     global data_lights_g
     global data_lights_b
