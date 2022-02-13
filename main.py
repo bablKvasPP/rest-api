@@ -52,8 +52,8 @@ def connect_mqtt(to_subscribe):
         return client
 
 
-def publish(topic, msg):
-    result = client.publish(topic, msg)
+def publish(topic, msg, retain=True):
+    result = client.publish(topic, msg, retain=True)
     status = result[0]
     if status == 0:
         print(f"Sending '{msg}' to topic '{topic}'")
@@ -129,8 +129,8 @@ class TemperatureAndHumidity(BaseModel):
 
 @app.put("/fan/threshold")
 def put_fan_threshold(data: TemperatureAndHumidity):
-    publish("fan/threshold/temperature", data.temperature, retrain=True)
-    publish("fan/threshold/humidity", data.humidity, retrain=True)
+    publish("fan/threshold/temperature", data.temperature)
+    publish("fan/threshold/humidity", data.humidity)
     global data_fan_on_temperature
     data_fan_on_temperature = data.temperature
     global data_fan_on_humidity
@@ -149,8 +149,8 @@ def put_fan_alert(data: Temperature):
 
 @app.put("/heat/threshold")
 def put_heat_threshold(data: TemperatureAndHumidity):
-    publish("heat/threshold/temperature", data.temperature, retrain=True)
-    publish("heat/threshold/humidity", data.humidity, retrain=True)
+    publish("heat/threshold/temperature", data.temperature)
+    publish("heat/threshold/humidity", data.humidity)
     global data_heat_on_temperature
     data_heat_on_temperature = data.temperature
     global data_heat_on_humidity
@@ -208,9 +208,9 @@ class RBGValues(BaseModel):
 
 @app.put("/lights")
 def put_lights(data: RBGValues):
-    publish("lights/r", data.r, retrain=True)
-    publish("lights/g", data.g, retrain=True)
-    publish("lights/b", data.b, retrain=True)
+    publish("lights/r", data.r)
+    publish("lights/g", data.g)
+    publish("lights/b", data.b)
     global data_lights_r
     global data_lights_g
     global data_lights_b
