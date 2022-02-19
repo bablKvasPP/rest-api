@@ -9,7 +9,7 @@ from os import getenv
 
 app = FastAPI()
 
-# ------------------------------------------------------- MQTT STUFF ----------------------------------------------------
+# ------------------------------------------------------- MQTT STUFF ---------------------------------------------------
 
 broker = getenv("MQTT_HOST")
 port = 1883 if getenv("MQTT_PORT") is None else int(getenv("MQTT_PORT"))
@@ -22,11 +22,11 @@ clientSubscribe = None
 data_global_temperature = 0
 data_global_humidity = 0
 
-data_fan_on_temperature: int = 0
+data_fan_ON_temperature: int = 0
 data_fan_alert_temperature: int = 0
-data_fan_on_humidity: int = 0
-data_heat_on_temperature: int = 0
-data_heat_on_humidity: int = 0
+data_fan_ON_humidity: int = 0
+data_heat_ON_temperature: int = 0
+data_heat_ON_humidity: int = 0
 data_illumination_1: int = 0
 data_illumination_2: int = 0
 data_lights_r: int = 0
@@ -54,7 +54,7 @@ def connect_mqtt(to_subscribe):
         return client
 
 
-def publish(topic, msg, retain=True):
+def publish(topic, msg):
     result = client.publish(topic, msg, retain=True)
     status = result[0]
     if status == 0:
@@ -69,17 +69,17 @@ def subscribe():
         the_topic = msg.topic
         print(f"Received '{the_msg}' from '{the_topic}' topic")
         if the_topic == "fan/threshold/temperature":
-            global data_fan_on_temperature
-            data_fan_on_temperature = the_msg
+            global data_fan_ON_temperature
+            data_fan_ON_temperature = the_msg
         if the_topic == "fan/threshold/humidity":
-            global data_fan_on_humidity
-            data_fan_on_humidity = the_msg
+            global data_fan_ON_humidity
+            data_fan_ON_humidity = the_msg
         if the_topic == "heat/threshold/temperature":
-            global data_heat_on_temperature
-            data_heat_on_temperature = the_msg
+            global data_heat_ON_temperature
+            data_heat_ON_temperature = the_msg
         if the_topic == "heat/threshold/humidity":
-            global data_heat_on_humidity
-            data_heat_on_humidity = the_msg
+            global data_heat_ON_humidity
+            data_heat_ON_humidity = the_msg
         if the_topic == "illumination/1":
             global data_illumination_1
             data_illumination_1 = the_msg
@@ -116,7 +116,7 @@ def parallel_thread():
     clientSubscribe.loop_forever()
 
 
-async def run_paho():
+async def run_paho():  # Not used, back to old one
     global client
     client.loop()
 
@@ -144,11 +144,22 @@ class TemperatureAndHumidity(BaseModel):
 def put_fan_threshold(data: TemperatureAndHumidity):
     publish("fan/threshold/temperature", data.temperature)
     publish("fan/threshold/humidity", data.humidity)
-    global data_fan_on_temperature
-    data_fan_on_temperature = data.temperature
-    global data_fan_on_humidity
-    data_fan_on_humidity = data.humidity
+    global data_fan_ON_temperature
+    data_fan_ON_temperature = data.temperature
+    global data_fan_ON_humidity
+    data_fan_ON_humidity = data.humidity
     return {"status": "ok"}
+
+# Тут же и с геттерами
+@app.get("/fan/threshold")
+def get_fan_threshold():
+    return {
+        "status": "ok",
+        "data": {
+            "temperature": data_fan_ON_temperature,
+            "humidity": data_fan_ON_humidity
+        }
+    }
 
 
 class Temperature(BaseModel):
@@ -162,16 +173,34 @@ def put_fan_alert(data: Temperature):
     data_fan_alert_temperature = data.temperature
     return {"status": "ok"}
 
+@app.get("/fan/alert")
+def get_fan_alert():
+    return {
+        "status": "ok",
+        "data": {
+            "temperature": data_fan_alert_temperature
+        }
+    }
 
 @app.put("/heat/threshold")
 def put_heat_threshold(data: TemperatureAndHumidity):
     publish("heat/threshold/temperature", data.temperature)
     publish("heat/threshold/humidity", data.humidity)
-    global data_heat_on_temperature
-    data_heat_on_temperature = data.temperature
-    global data_heat_on_humidity
-    data_heat_on_humidity = data.humidity
+    global data_heat_ON_temperature
+    data_heat_ON_temperature = data.temperature
+    global data_heat_ON_humidity
+    data_heat_ON_humidity = data.humidity
     return {"status": "ok"}
+
+@app.get("/heat/threshold")
+def get_heat_threshold():
+    return {
+        "status": "ok",
+        "data": {
+            "temperature": data_heat_ON_temperature,
+            "humidity": data_heat_ON_humidity
+        }
+    }
 
 
 # Показания датчиков
