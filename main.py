@@ -27,10 +27,12 @@ data_fan_alert_temperature: int = 0
 data_fan_on_humidity: int = 0
 data_heat_on_temperature: int = 0
 data_heat_on_humidity: int = 0
-data_illumination: int = 0
+data_illumination_1: int = 0
+data_illumination_2: int = 0
 data_lights_r: int = 0
 data_lights_g: int = 0
 data_lights_b: int = 0
+
 
 def connect_mqtt(to_subscribe):
     # Set Connecting Client ID
@@ -41,6 +43,7 @@ def connect_mqtt(to_subscribe):
         global clientSubscribe
         clientSubscribe = mqtt_client.Client(client_id_subscribe)
         clientSubscribe.connect(broker, port)
+        subscribe()
         return clientSubscribe
     else:
         global client
@@ -77,9 +80,12 @@ def subscribe():
         if the_topic == "heat/threshold/humidity":
             global data_heat_on_humidity
             data_heat_on_humidity = the_msg
-        if the_topic == "illumination":
-            global data_illumination
-            data_illumination = the_msg
+        if the_topic == "illumination/1":
+            global data_illumination_1
+            data_illumination_1 = the_msg
+        if the_topic == "illumination/2":
+            global data_illumination_2
+            data_illumination_2 = the_msg
         if the_topic == "lights/r":
             global data_lights_r
             data_lights_r = the_msg
@@ -102,11 +108,17 @@ def subscribe():
     clientSubscribe.subscribe("#")
     clientSubscribe.on_message = on_message
 
+
 def parallel_thread():
     global clientSubscribe
-    clientSubscribe = connect_mqtt(True)
+    clientSubscribe = connect_mqtt(False)
     subscribe()
     clientSubscribe.loop_forever()
+
+
+async def run_paho():
+    global client
+    client.loop()
 
 
 def run():
@@ -114,6 +126,7 @@ def run():
     client = connect_mqtt(False)
     client.loop_start()
     _thread.start_new_thread(parallel_thread, ())
+
 
 run()
 
@@ -126,6 +139,7 @@ class TemperatureAndHumidity(BaseModel):
     temperature: int
     humidity: int
 
+
 @app.put("/fan/threshold")
 def put_fan_threshold(data: TemperatureAndHumidity):
     publish("fan/threshold/temperature", data.temperature)
@@ -136,15 +150,18 @@ def put_fan_threshold(data: TemperatureAndHumidity):
     data_fan_on_humidity = data.humidity
     return {"status": "ok"}
 
+
 class Temperature(BaseModel):
     temperature: int
 
+
 @app.put("/fan/alert")
 def put_fan_alert(data: Temperature):
-    publish("/fan/alert", data.temperature)
+    publish("fan/alert", data.temperature)
     global data_fan_alert_temperature
     data_fan_alert_temperature = data.temperature
     return {"status": "ok"}
+
 
 @app.put("/heat/threshold")
 def put_heat_threshold(data: TemperatureAndHumidity):
@@ -155,6 +172,7 @@ def put_heat_threshold(data: TemperatureAndHumidity):
     global data_heat_on_humidity
     data_heat_on_humidity = data.humidity
     return {"status": "ok"}
+
 
 # Показания датчиков
 
@@ -177,19 +195,31 @@ def get_humidity():
         }
     }
 
+
 # Свет
 
-@app.get("/illumination")
-def get_humidity():
+@app.get("/illumination/1")
+def get_illumination1():
     return {
         "status": "ok",
         "data": {
-            "illumination": data_illumination
+            "illumination": data_illumination_1
         }
     }
 
+
+@app.get("/illumination/2")
+def get_illumination2():
+    return {
+        "status": "ok",
+        "data": {
+            "illumination": data_illumination_2
+        }
+    }
+
+
 @app.get("/lights")
-def get_humidity():
+def get_lights():
     return {
         "status": "ok",
         "data": {
@@ -204,6 +234,7 @@ class RBGValues(BaseModel):
     r: int
     g: int
     b: int
+
 
 @app.put("/lights")
 def put_lights(data: RBGValues):
