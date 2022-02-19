@@ -6,6 +6,8 @@ from paho.mqtt import client as mqtt_client
 import random
 import _thread
 from os import getenv
+from fastapi.middleware.cors import CORSMiddleware
+
 
 app = FastAPI()
 
@@ -17,6 +19,15 @@ client_id = f'python-mqtt-{random.randint(0, 1000)}'
 client_id_subscribe = f'python-mqtt-{random.randint(0, 1000)}'
 client = None
 clientSubscribe = None
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 
 # The data for subscribed topics change
 data_global_temperature = 0
@@ -114,11 +125,6 @@ def parallel_thread():
     clientSubscribe = connect_mqtt(False)
     subscribe()
     clientSubscribe.loop_forever()
-
-
-async def run_paho():  # Not used, back to old one
-    global client
-    client.loop()
 
 
 def run():
